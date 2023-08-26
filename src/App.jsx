@@ -1,56 +1,132 @@
-import { useState } from 'react';
 import './App.css';
+import { create } from 'zustand';
 
-function App() {
-  const [list, setList] = useState([
-    {
-      id: new Date().getTime(),
-      todo: '투두',
-      completed: false,
-    },
-  ]);
-  const onSubmit = (e) => {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const todo = formData.get('todo');
-    const newList = [
-      ...list,
+const useTodoList = create((set) => {
+  return {
+    // 상태
+    list: [
       {
         id: new Date().getTime(),
-        todo,
+        todo: '투두',
         completed: false,
       },
-    ];
-    setList(newList);
+    ],
+    // 액션
+    createTodo: (todo) => {
+      set((state) => {
+        const newList = [
+          ...state.list,
+          {
+            id: new Date().getTime(),
+            todo,
+            completed: false,
+          },
+        ];
+
+        // set 함수를 호출할때의 규칙
+        // 반드시 온전한 state를 반환해라!
+        return {
+          ...state,
+          list: newList,
+        };
+      });
+    },
+    updateTodo: (id) => {
+      set((state) => {
+        const newList = state.list.map((data) => {
+          if (data.id === id) {
+            return {
+              ...data,
+              completed: !data.completed,
+            };
+          }
+
+          return data;
+        });
+
+        // set 함수를 호출할때의 규칙
+        // 반드시 온전한 state를 반환해라!
+        return {
+          ...state,
+          list: newList,
+        };
+      });
+    },
+    deleteTodo: (id) => {
+      set((state) => {
+        // set 함수를 호출할때의 규칙
+        // 반드시 온전한 state를 반환해라!
+        const newList = state.list.filter((data) => {
+          // false 를 리턴하면 배열에서 제외
+          if (data.id === id) {
+            return false;
+          }
+          // true 를 리턴하면 배열안에 포함
+          return true;
+        });
+
+        return {
+          ...state,
+          list: newList,
+        };
+      });
+    },
+  };
+});
+
+function App() {
+  const { list, createTodo, updateTodo, deleteTodo } = useTodoList();
+  // const [list, setList] = useState([
+  //   {
+  //     id: new Date().getTime(),
+  //     todo: "투두",
+  //     completed: false,
+  //   },
+  // ]);
+  const onSubmit = (e) => {
+    e.preventDefault();
+    // 값을 가공하는 부분[s]
+    // 폼을 가져오고
+    const form = e.currentTarget;
+    // 폼 데이터로 만들고
+    const formData = new FormData(form);
+    // input 의 값을 읽어온 다음에
+    const todo = formData.get('todo');
+    // 값을 가공하는 부분[e]
+
+    // zustand 액션 호출!
+    // 값만 넘기는게 포인트
+    createTodo(todo);
+
+    // 폼 리셋
     form.reset();
   };
   console.log(list);
-  const complete = (id) => {
-    const newList = list.map((data) => {
-      if (data.id === id) {
-        return {
-          ...data,
-          completed: !data.completed,
-        };
-      }
+  // const complete = (id) => {
+  // const newList = list.map((data) => {
+  //   if (data.id === id) {
+  //     return {
+  //       ...data,
+  //       completed: !data.completed,
+  //     };
+  //   }
 
-      return data;
-    });
-    setList(newList);
-  };
-  const deleteTodo = (id) => {
-    const newList = list.filter((data) => {
-      // false 를 리턴하면 배열에서 제외
-      if (data.id === id) {
-        return false;
-      }
-      // true 를 리턴하면 배열안에 포함
-      return true;
-    });
+  //   return data;
+  // });
+  //   setList(newList);
+  // };
+  // const deleteTodo = (id) => {
+  //   const newList = list.filter((data) => {
+  //     // false 를 리턴하면 배열에서 제외
+  //     if (data.id === id) {
+  //       return false;
+  //     }
+  //     // true 를 리턴하면 배열안에 포함
+  //     return true;
+  //   });
 
-    setList(newList);
-  };
+  //   setList(newList);
+  // };
 
   return (
     <div className='flex items-center justify-center w-screen h-screen font-medium'>
@@ -87,7 +163,7 @@ function App() {
                     defaultChecked={completed}
                   />
                   <span
-                    onClick={() => complete(id)}
+                    onClick={() => updateTodo(id)}
                     name='check'
                     className='peer-checked:bg-green-500 peer-checked:border-green-500 peer-checked:text-white flex items-center justify-center w-5 h-5 text-transparent border-2 border-gray-500 rounded-full'
                   >
