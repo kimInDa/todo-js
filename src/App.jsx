@@ -1,17 +1,55 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 
 function App() {
-  const ref = useRef();
-  const [todoList, setTodoList] = useState([]);
-
-  const onClick = () => {
-    setTodoList([...todoList, ref.current.value]);
+  const [list, setList] = useState([
+    {
+      id: new Date().getTime(),
+      todo: '투두',
+      completed: false,
+    },
+  ]);
+  const onSubmit = (e) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const todo = formData.get('todo');
+    const newList = [
+      ...list,
+      {
+        id: new Date().getTime(),
+        todo,
+        completed: false,
+      },
+    ];
+    setList(newList);
+    form.reset();
   };
-  const onKeyUp = (e) => {
-    if (e.keyCode === 13) {
-      setTodoList([...todoList, ref.current.value]);
-    }
+  console.log(list);
+  const complete = (id) => {
+    const newList = list.map((data) => {
+      if (data.id === id) {
+        return {
+          ...data,
+          completed: !data.completed,
+        };
+      }
+
+      return data;
+    });
+    setList(newList);
+  };
+  const deleteTodo = (id) => {
+    const newList = list.filter((data) => {
+      // false 를 리턴하면 배열에서 제외
+      if (data.id === id) {
+        return false;
+      }
+      // true 를 리턴하면 배열안에 포함
+      return true;
+    });
+
+    setList(newList);
   };
 
   return (
@@ -35,23 +73,21 @@ function App() {
             </svg>
             <h4 className='font-semibold ml-3 text-lg'>Todo List</h4>
           </div>
-          {/* todo[s] */}
-          {todoList.map((todo, index) => {
-            const key = `todoList_${index}`;
+          {list.map((data, index) => {
+            const key = `${data.id}_${index}`;
+            const { todo, id, completed } = data;
 
             return (
               <div className='group' key={key}>
-                {/* todo label[s] */}
                 <label className='flex items-center h-10 px-2 rounded cursor-pointer hover:bg-gray-900'>
-                  {/* hidden check[s] */}
                   <input
                     name='hidden-check'
                     className='hidden peer'
                     type='checkbox'
+                    defaultChecked={completed}
                   />
-                  {/* hidden check[e] */}
-                  {/* check[s] */}
                   <span
+                    onClick={() => complete(id)}
                     name='check'
                     className='peer-checked:bg-green-500 peer-checked:border-green-500 peer-checked:text-white flex items-center justify-center w-5 h-5 text-transparent border-2 border-gray-500 rounded-full'
                   >
@@ -68,17 +104,17 @@ function App() {
                       />
                     </svg>
                   </span>
-                  {/* check[e] */}
-                  {/* content[s] */}
                   <span
                     className='select-none mx-4 text-sm w-full peer-checked:line-through'
                     name='viewer'
                   >
                     {todo}
                   </span>
-                  {/* content[e] */}
-                  {/* delete[s] */}
-                  <button name='delete' className='hidden group-hover:block'>
+                  <button
+                    onClick={() => deleteTodo(id)}
+                    name='delete'
+                    className='hidden group-hover:block'
+                  >
                     <svg
                       className='w-5 h-5 text-gray-400 fill-current mx-1'
                       version='1.1'
@@ -89,75 +125,70 @@ function App() {
                     >
                       <path
                         d='M13.98,0C6.259,0,0,6.261,0,13.983c0,7.721,6.259,13.982,13.98,13.982c7.725,0,13.985-6.262,13.985-13.982
-        C27.965,6.261,21.705,0,13.98,0z M19.992,17.769l-2.227,2.224c0,0-3.523-3.78-3.786-3.78c-0.259,0-3.783,3.78-3.783,3.78
-        l-2.228-2.224c0,0,3.784-3.472,3.784-3.781c0-0.314-3.784-3.787-3.784-3.787l2.228-2.229c0,0,3.553,3.782,3.783,3.782
-        c0.232,0,3.786-3.782,3.786-3.782l2.227,2.229c0,0-3.785,3.523-3.785,3.787C16.207,14.239,19.992,17.769,19.992,17.769z'
+      C27.965,6.261,21.705,0,13.98,0z M19.992,17.769l-2.227,2.224c0,0-3.523-3.78-3.786-3.78c-0.259,0-3.783,3.78-3.783,3.78
+      l-2.228-2.224c0,0,3.784-3.472,3.784-3.781c0-0.314-3.784-3.787-3.784-3.787l2.228-2.229c0,0,3.553,3.782,3.783,3.782
+      c0.232,0,3.786-3.782,3.786-3.782l2.227,2.229c0,0-3.785,3.523-3.785,3.787C16.207,14.239,19.992,17.769,19.992,17.769z'
                       />
                     </svg>
                   </button>
-                  {/* delete[e] */}
                 </label>
-                {/* todo label[e] */}
               </div>
             );
           })}
-
-          {/* todo[e] */}
-          {/* form[s] */}
-          <div className='flex items-center w-full mt-2'>
-            {/* submit button[s] */}
-            <button
-              id='submit'
-              className='h-8 px-2 text-sm font-medium rounded'
-              onClick={onClick}
-            >
-              <svg
-                className='w-5 h-5 text-gray-400 fill-current'
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
+          <form onSubmit={onSubmit}>
+            <div className='flex items-center w-full mt-2'>
+              {/* submit button[s] */}
+              <button
+                id='submit'
+                type='submit'
+                className='h-8 px-2 text-sm font-medium rounded'
               >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-                />
-              </svg>
-            </button>
-            {/* submit button[e] */}
-            {/* todo input[s] */}
-            <input
-              className='peer/todo flex-grow h-8 ml-4 bg-transparent focus:outline-none font-medium'
-              type='text'
-              id='todo'
-              name='todo'
-              required
-              placeholder='add a new todo'
-              ref={ref}
-              onKeyUp={onKeyUp}
-            />
-            {/* todo input[e] */}
-            {/* reset button[s] */}
-            <button
-              id='reset'
-              className='peer-invalid/todo:hidden h-8 px-2 text-sm font-medium rounded'
-            >
-              <svg
-                className='w-5 h-5 text-gray-400 fill-current'
-                viewBox='0 0 1920 1920'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
+                <svg
+                  className='w-5 h-5 text-gray-400 fill-current'
                   xmlns='http://www.w3.org/2000/svg'
-                  d='M960 0v213.333c411.627 0 746.667 334.934 746.667 746.667S1371.627 1706.667 960 1706.667 213.333 1371.733 213.333 960c0-197.013 78.4-382.507 213.334-520.747v254.08H640V106.667H53.333V320h191.04C88.64 494.08 0 720.96 0 960c0 529.28 430.613 960 960 960s960-430.72 960-960S1489.387 0 960 0'
-                  fillRule='evenodd'
-                />
-              </svg>
-            </button>
-            {/* reset button[e] */}
-          </div>
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M12 6v6m0 0v6m0-6h6m-6 0H6'
+                  />
+                </svg>
+              </button>
+              {/* submit button[e] */}
+              {/* todo input[s] */}
+              <input
+                className='peer/todo flex-grow h-8 ml-4 bg-transparent focus:outline-none font-medium'
+                type='text'
+                id='todo'
+                name='todo'
+                required
+                placeholder='add a new todo'
+              />
+              {/* todo input[e] */}
+              {/* reset button[s] */}
+              <button
+                type='reset'
+                className='peer-invalid/todo:hidden h-8 px-2 text-sm font-medium rounded'
+              >
+                <svg
+                  className='w-5 h-5 text-gray-400 fill-current'
+                  viewBox='0 0 1920 1920'
+                  xmlns='http://www.w3.org/2000/svg'
+                >
+                  <path
+                    xmlns='http://www.w3.org/2000/svg'
+                    d='M960 0v213.333c411.627 0 746.667 334.934 746.667 746.667S1371.627 1706.667 960 1706.667 213.333 1371.733 213.333 960c0-197.013 78.4-382.507 213.334-520.747v254.08H640V106.667H53.333V320h191.04C88.64 494.08 0 720.96 0 960c0 529.28 430.613 960 960 960s960-430.72 960-960S1489.387 0 960 0'
+                    fillRule='evenodd'
+                  />
+                </svg>
+              </button>
+              {/* reset button[e] */}
+            </div>
+          </form>
           {/* form[e] */}
         </div>
       </div>
